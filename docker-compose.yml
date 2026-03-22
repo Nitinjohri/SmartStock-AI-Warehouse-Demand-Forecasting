@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres:15-alpine
+    container_name: smartstock_db
+    environment:
+      POSTGRES_USER:     smartstock
+      POSTGRES_PASSWORD: smartstock
+      POSTGRES_DB:       smartstock
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartstock"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: smartstock_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./smart/src:/app/smart/src
+      - ./smart/models:/app/smart/models
+      - ./smart/output:/app/smart/output
+      - ./data:/app/data
+    environment:
+      - ML_PIPELINE_PATH=/app/smart
+      - SMART_SRC_PATH=/app/smart/src
+      - DATA_PATH=/app/data/Retail_Dataset2.csv
+      - DATABASE_URL=postgresql+asyncpg://smartstock:smartstock@db:5432/smartstock
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: smartstock_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

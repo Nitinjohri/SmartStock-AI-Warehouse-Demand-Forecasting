@@ -1,0 +1,6 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/smart/Scripts/python.exe",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/smart/src"
+    ]
+}

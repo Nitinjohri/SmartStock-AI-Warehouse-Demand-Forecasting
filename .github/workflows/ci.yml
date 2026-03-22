@@ -1,0 +1,129 @@
+name: SmartStock CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 6 * * 1'   
+
+jobs:
+
+
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER:     smartstock
+          POSTGRES_PASSWORD: smartstock
+          POSTGRES_DB:       smartstock
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirement.txt
+
+      - name: Lint with ruff
+        run: |
+          pip install ruff
+          ruff check backend/app --ignore E501
+
+      - name: Run API smoke test
+        env:
+          DATABASE_URL: postgresql+asyncpg://smartstock:smartstock@localhost:5432/smartstock
+        run: |
+          cd backend
+          python -c "from main import app; print('✅ Backend imports OK')"
+
+  
+  ml-validation:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ML dependencies
+        run: |
+          pip install prophet xgboost pandas numpy scikit-learn
+
+      - name: Generate synthetic data
+        run: |
+          cd smart/src
+          python Generate_data.py
+
+      - name: Run MAPE validation gate
+        run: |
+          cd smart/src
+          python pipeline.py --validate-only
+          echo "✅ MAPE gate passed"
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: ml-validation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: |
+          # Use root context (.) so it can find requirement.txt
+          docker build -t smartstock-api -f backend/Dockerfile .
+
+      - name: Build frontend image
+        run: |
+          docker build -t smartstock-frontend -f frontend/dockerfile ./frontend
+
+      - name: Verify backend container starts
+        run: |
+          docker run --rm -d \
+            --name test-api \
+            -p 8000:8000 \
+            -e DATABASE_URL=postgresql+asyncpg://smartstock:smartstock@localhost:5432/smartstock \
+            smartstock-api
+          sleep 10
+          docker logs test-api
+          docker stop test-api
+
+      - name: Log in to GitHub Container Registry
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push images to registry
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker tag smartstock-api ghcr.io/${{ github.repository_owner }}/smartstock-api:latest
+          docker tag smartstock-frontend ghcr.io/${{ github.repository_owner }}/smartstock-frontend:latest
+          docker push ghcr.io/${{ github.repository_owner }}/smartstock-api:latest
+          docker push ghcr.io/${{ github.repository_owner }}/smartstock-frontend:latest
+          echo " Images pushed to GitHub Container Registry"

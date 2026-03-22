@@ -1,0 +1,7 @@
+{
+  "extraPaths": [
+    "smart/src"
+  ],
+  "pythonVersion": "3.10",
+  "reportMissingImports": "warning"
+}
