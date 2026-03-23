@@ -25,7 +25,7 @@ async def upsert_sku(db: AsyncSession, sku_id: str, name: str, lead_time: int) -
     return sku
 
 async def get_all_skus(db: AsyncSession) -> list[SKU]:
-    result = await db.execute(select(SKU).where(SKU.is_active == True))
+    result = await db.execute(select(SKU).where(SKU.is_active))
     return result.scalars().all()
 
 

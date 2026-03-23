@@ -5,13 +5,9 @@ This is the bridge between FastAPI and the ML pipeline.
 """
 
 import os
-import json
 import pickle
 import threading
 import pandas as pd
-import numpy as np
-from datetime import datetime
-from typing import Optional
 
 # Fallback to CWD to avoid Uvicorn __file__ encoding corruption on Windows with em-dash paths
 cwd = os.getcwd()
@@ -152,7 +148,7 @@ class PipelineService:
             forecasts_path = os.path.join(OUTPUTS_DIR, "forecasts.csv")
             if os.path.exists(forecasts_path):
                 self._forecasts_df = pd.read_csv(forecasts_path)
-                print(f"[Service] Loaded precomputed forecasts for fast serving")
+                print("[Service] Loaded precomputed forecasts for fast serving")
 
             # Precompute Inventory Cache from summary (Instant Dashboard Loading)
             if os.path.exists(METRICS_PATH):

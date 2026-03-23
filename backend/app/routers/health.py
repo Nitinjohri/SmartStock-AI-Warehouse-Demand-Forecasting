@@ -1,8 +1,7 @@
 import subprocess
 import os
-import threading
 from fastapi import APIRouter, BackgroundTasks, Query
-from ..services.pipeline_service import pipeline_service, ML_PIPELINE_PATH
+from ..services.pipeline_service import pipeline_service
 
 router = APIRouter()
 
