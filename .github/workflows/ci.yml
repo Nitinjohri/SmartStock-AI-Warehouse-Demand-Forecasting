@@ -122,12 +122,6 @@ jobs:
           docker logs test-api
           docker stop test-api
 
-      - name: Set lower case owner name
-        run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "OWNER_LC=$OWNER_LC" >>${GITHUB_ENV}
-          echo "Transformed owner name: $OWNER_LC"
-
       - name: Log in to GitHub Container Registry
         if: github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
@@ -139,8 +133,12 @@ jobs:
       - name: Push images to registry
         if: github.ref == 'refs/heads/main'
         run: |
-          docker tag smartstock-api ghcr.io/${{ env.OWNER_LC }}/smartstock-api:latest
-          docker tag smartstock-frontend ghcr.io/${{ env.OWNER_LC }}/smartstock-frontend:latest
-          docker push ghcr.io/${{ env.OWNER_LC }}/smartstock-api:latest
-          docker push ghcr.io/${{ env.OWNER_LC }}/smartstock-frontend:latest
-          echo " Images pushed to GitHub Container Registry"
+          # Set lowercase owner in the same shell process for maximum reliability
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "Processing for owner: $OWNER_LC"
+          
+          docker tag smartstock-api ghcr.io/$OWNER_LC/smartstock-api:latest
+          docker tag smartstock-frontend ghcr.io/$OWNER_LC/smartstock-frontend:latest
+          docker push ghcr.io/$OWNER_LC/smartstock-api:latest
+          docker push ghcr.io/$OWNER_LC/smartstock-frontend:latest
+          echo "✅ Images pushed to GitHub Container Registry"
