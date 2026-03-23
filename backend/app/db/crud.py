@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 from .models import SKU, Inventory, Forecast, PurchaseOrder, PipelineRun
+from datetime import date, datetime
 
 
 # ── SKUs ──────────────────────────────────────────────────────────────────────
@@ -60,7 +61,6 @@ async def get_inventory_by_sku(db: AsyncSession, sku_id: str) -> Inventory | Non
 async def save_forecasts(db: AsyncSession, sku_id: str, forecast_points: list[dict]):
     """Delete old forecasts for SKU and insert new ones."""
     await db.execute(delete(Forecast).where(Forecast.sku_id == sku_id))
-    from datetime import date, datetime
 
     for point in forecast_points:
         f_date = point["date"]
