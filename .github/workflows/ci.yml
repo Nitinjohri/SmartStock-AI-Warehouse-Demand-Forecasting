@@ -124,9 +124,9 @@ jobs:
 
       - name: Set lower case owner name
         run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "OWNER_LC=$OWNER_LC" >>${GITHUB_ENV}
+          echo "Transformed owner name: $OWNER_LC"
 
       - name: Log in to GitHub Container Registry
         if: github.ref == 'refs/heads/main'
