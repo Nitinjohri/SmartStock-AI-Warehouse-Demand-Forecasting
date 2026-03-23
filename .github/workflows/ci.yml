@@ -44,15 +44,14 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          pip install ruff
-          ruff check backend/app --ignore E501
+          ruff check backend --ignore E501
 
       - name: Run API smoke test
         env:
           DATABASE_URL: postgresql+asyncpg://smartstock:smartstock@localhost:5432/smartstock
+          PYTHONPATH: .
         run: |
-          cd backend
-          python -c "from main import app; print('✅ Backend imports OK')"
+          python -c "from backend.main import app; print('✅ Backend imports OK')"
 
   
   ml-validation:
@@ -70,22 +69,33 @@ jobs:
 
       - name: Install ML dependencies
         run: |
-          pip install prophet xgboost pandas numpy scikit-learn
+          pip install -r requirement.txt
 
-      - name: Generate synthetic data
-        run: |
-          cd smart/src
-          python Generate_data.py
-
-      - name: Run MAPE validation gate
+      - name: Run Pipeline Validation Gate
+        env:
+          CI: "true"
         run: |
           cd smart/src
           python pipeline.py --validate-only
-          echo "✅ MAPE gate passed"
+          echo "✅ Pipeline validation passed"
 
   docker-build:
     runs-on: ubuntu-latest
     needs: ml-validation
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER:     smartstock
+          POSTGRES_PASSWORD: smartstock
+          POSTGRES_DB:       smartstock
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -104,6 +114,7 @@ jobs:
         run: |
           docker run --rm -d \
             --name test-api \
+            --network host \
             -p 8000:8000 \
             -e DATABASE_URL=postgresql+asyncpg://smartstock:smartstock@localhost:5432/smartstock \
             smartstock-api

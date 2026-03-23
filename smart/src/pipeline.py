@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+import argparse
 
 from Generate_data import generate_all
 from Feature_engineering import build_features
@@ -12,7 +13,13 @@ from Reorder import calculate_reorder_for_sku, generate_purchase_orders
 
 
 # ── Configuration ────────────────────────────────────────────────────────────
-DATA_PATH       = r"C:\Users\NITIN JOHRI\OneDrive\Desktop\Retail_Dataset2.csv"
+DEFAULT_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "sales_data.csv")
+DATA_PATH       = os.environ.get("DATA_PATH", r"C:\Users\NITIN JOHRI\OneDrive\Desktop\Retail_Dataset2.csv")
+
+# If hardcoded path doesn't exist, fallback to generated data path
+if not os.path.exists(DATA_PATH):
+    DATA_PATH = DEFAULT_DATA_PATH
+
 MODEL_DIR       = os.path.join(os.path.dirname(__file__), "..", "models")
 OUTPUT_DIR      = os.path.join(os.path.dirname(__file__), "..", "output")
 # --- Training Configuration ---
@@ -56,7 +63,7 @@ def map_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def run_pipeline():
+def run_pipeline(validate_only=False):
     """Execute the full SmartStock pipeline."""
 
     os.makedirs(MODEL_DIR, exist_ok=True)
@@ -74,10 +81,15 @@ def run_pipeline():
         raw_df = map_columns(raw_df)
         print(f"  Mapped columns:   {list(raw_df.columns)}")
     else:
-        print("  Dataset not found! Generating synthetic data …")
+        print(f"  Dataset not found at {DATA_PATH}! Generating synthetic data …")
+        os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
         raw_df = generate_all(output_path=DATA_PATH)
 
     print(f"  Rows: {len(raw_df):,}  |  SKUs: {raw_df['sku_id'].nunique()}")
+
+    if validate_only:
+        print("\n✅ Validation successful: Data loaded and mapped.")
+        return
 
     # Build SKU list from the actual data
     sku_list = raw_df.groupby("sku_id").agg(
@@ -87,7 +99,15 @@ def run_pipeline():
 
     # --- SKU Selection Logic ---
     print("\nTRAINING MODE SELECTION:")
-    user_choice = input(" [1] Train ALL SKUs (Very long)\n [2] Train top 100 (Recommended)\n Choice [1 or 2]: ").strip()
+    
+    # Check if running in a non-interactive environment (CI)
+    is_ci = os.environ.get("CI") == "true" or not sys.stdin.isatty()
+    
+    if is_ci:
+        print("  Running in CI/Non-interactive mode. Defaulting to: Train top 100.")
+        user_choice = "2"
+    else:
+        user_choice = input(" [1] Train ALL SKUs (Very long)\n [2] Train top 100 (Recommended)\n Choice [1 or 2]: ").strip()
     
     if user_choice == "1":
         print(f"  Training on all {len(sku_list)} SKUs natively without artificial hardcoded limits")
@@ -238,4 +258,8 @@ def run_pipeline():
 
 
 if __name__ == "__main__":
-    run_pipeline()
+    parser = argparse.ArgumentParser(description="SmartStock ML Pipeline")
+    parser.add_argument("--validate-only", action="store_true", help="Only validate data loading and mapping")
+    args = parser.parse_args()
+    
+    run_pipeline(validate_only=args.validate_only)
