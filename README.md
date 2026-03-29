@@ -1,4 +1,4 @@
-# 📦 SmartStock AI
+#  SmartStock AI
 ### *Next-Gen Warehouse Demand Forecasting & Auto-Replenishment*
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/your-username/smartstock-ai/ci.yml?branch=main&style=flat-square)](https://github.com/your-username/smartstock-ai/actions)
@@ -9,7 +9,7 @@
 
 ---
 
-## 🚀 Overview
+##  Overview
 
 **SmartStock AI** is an advanced inventory management platform engineered to solve the "Out-of-Stock" vs "Over-Stock" dilemma. By leveraging a **Hybrid ML Engine**, it provides high-precision demand forecasting and automates the replenishment cycle for enterprise warehouses.
 
@@ -18,19 +18,19 @@
 
 ---
 
-## 🌟 Key Features
+##  Key Features
 
 | Feature | Description |
 | :--- | :--- |
-| **🧠 Hybrid AI Engine** | Combines **Facebook Prophet** (seasonality) with **XGBoost** (short-term regression). |
-| **🔄 Auto-Replenishment** | Automated reordering logic based on safety stock, lead times, and demand spikes. |
-| **📈 Dynamic Dashboards** | Real-time visualization of inventory health, trends, and critical alerts. |
-| **🐳 Cloud Native** | Fully containerized architecture optimized for scalable cloud deployments. |
-| **🛡️ ML Quality Gates** | CI/CD pipelines that validate model accuracy (MAPE) before every production rollout. |
+| ** Hybrid AI Engine** | Combines **Facebook Prophet** (seasonality) with **XGBoost** (short-term regression). |
+| ** Auto-Replenishment** | Automated reordering logic based on safety stock, lead times, and demand spikes. |
+| ** Dynamic Dashboards** | Real-time visualization of inventory health, trends, and critical alerts. |
+| ** Cloud Native** | Fully containerized architecture optimized for scalable cloud deployments. |
+| ** ML Quality Gates** | CI/CD pipelines that validate model accuracy (MAPE) before every production rollout. |
 
 ---
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 <p align="left">
   <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54" alt="Python" />
@@ -43,7 +43,7 @@
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```mermaid
 graph TD
@@ -70,7 +70,7 @@ graph TD
 
 ---
 
-## ⚡ Quick Start
+##  Quick Start
 
 ### 1. Requirements
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) installed.
@@ -95,7 +95,7 @@ docker-compose up --build -d
 
 ---
 
-## 🧪 Technical Strategy
+##  Technical Strategy
 
 ### Local Development Setup
 If you prefer running components individually without Docker:
@@ -120,7 +120,7 @@ npm start
 
 ---
 
-## 📄 License & Contact
+##  License & Contact
 Distributed under the **MIT License**.
 
 **Author:** Nitin Johri
